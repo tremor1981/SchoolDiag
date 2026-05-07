@@ -14,13 +14,13 @@
 </div>
 
 <div class="card">
-  {% if rows %}
   <div class="mb-4">
     <form method="GET" action="{{ url_for('admin.results_students') }}" class="flex gap-2">
       <input type="text" id="tableSearch" name="q" class="form-control" placeholder="🔍 Поиск по ученику..." value="{{ q or '' }}" onkeyup="filterTable()">
       <button type="submit" class="btn btn-outline">Искать</button>
     </form>
   </div>
+  {% if rows %}
   <div class="table-wrap">
     <table>
       <thead>

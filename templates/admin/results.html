@@ -14,7 +14,6 @@
 </div>
 
 <div class="card">
-  {% if sessions %}
   <div class="mb-4">
     <form method="GET" action="{{ url_for('admin.results') }}" class="flex gap-2">
       {% if student_id %}<input type="hidden" name="student_id" value="{{ student_id }}">{% endif %}
@@ -23,6 +22,7 @@
       <button type="submit" class="btn btn-outline">Искать</button>
     </form>
   </div>
+  {% if sessions %}
   <div class="table-wrap">
     <table>
       <thead>
