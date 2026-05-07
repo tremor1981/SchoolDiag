@@ -16,7 +16,12 @@
 <div class="card">
   {% if sessions %}
   <div class="mb-4">
-    <input type="text" id="tableSearch" class="form-control" placeholder="🔍 Поиск по ученику или учителю..." onkeyup="filterTable()">
+    <form method="GET" action="{{ url_for('admin.results') }}" class="flex gap-2">
+      {% if student_id %}<input type="hidden" name="student_id" value="{{ student_id }}">{% endif %}
+      {% if teacher_id %}<input type="hidden" name="teacher_id" value="{{ teacher_id }}">{% endif %}
+      <input type="text" id="tableSearch" name="q" class="form-control" placeholder="🔍 Поиск по ученику или учителю..." value="{{ q or '' }}" onkeyup="filterTable()">
+      <button type="submit" class="btn btn-outline">Искать</button>
+    </form>
   </div>
   <div class="table-wrap">
     <table>

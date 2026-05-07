@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user, logout_user
 from functools import wraps
+from sqlalchemy import or_
 from models import db, User, Subject, Question, Student, TestSession, Answer
 
 admin_bp = Blueprint('admin', __name__)
@@ -138,21 +139,31 @@ def results():
     q = TestSession.query.filter_by(status='completed')
     student_id = request.args.get('student_id', type=int)
     teacher_id = request.args.get('teacher_id', type=int)
+    term = (request.args.get('q') or '').strip()
     if student_id:
         q = q.filter_by(student_id=student_id)
     if teacher_id:
         q = q.filter_by(teacher_id=teacher_id)
+    if term:
+        like = f'%{term}%'
+        q = (q.join(Student, TestSession.student_id == Student.id)
+             .join(User, TestSession.teacher_id == User.id)
+             .filter(or_(Student.full_name.ilike(like),
+                         User.full_name.ilike(like),
+                         User.username.ilike(like))))
     sessions = q.order_by(TestSession.completed_at.desc()).all()
     return render_template('admin/results.html',
                            sessions=sessions,
                            student_id=student_id,
-                           teacher_id=teacher_id)
+                           teacher_id=teacher_id,
+                           q=term)
 
 
 @admin_bp.route('/results/students')
 @login_required
 @admin_required
 def results_students():
+    term = (request.args.get('q') or '').strip().lower()
     sessions = (TestSession.query.filter_by(status='completed')
                 .order_by(TestSession.completed_at.desc()).all())
     rows_map = {}
@@ -180,13 +191,16 @@ def results_students():
             'last_completed_at': item['last_completed_at'],
         })
     rows.sort(key=lambda r: (r['last_completed_at'] is None, r['last_completed_at']), reverse=True)
-    return render_template('admin/results_students.html', rows=rows)
+    if term:
+        rows = [r for r in rows if term in (r['student'].full_name or '').lower()]
+    return render_template('admin/results_students.html', rows=rows, q=term)
 
 
 @admin_bp.route('/results/teachers')
 @login_required
 @admin_required
 def results_teachers():
+    term = (request.args.get('q') or '').strip().lower()
     sessions = (TestSession.query.filter_by(status='completed')
                 .order_by(TestSession.completed_at.desc()).all())
     rows_map = {}
@@ -214,7 +228,9 @@ def results_teachers():
             'last_completed_at': item['last_completed_at'],
         })
     rows.sort(key=lambda r: (r['last_completed_at'] is None, r['last_completed_at']), reverse=True)
-    return render_template('admin/results_teachers.html', rows=rows)
+    if term:
+        rows = [r for r in rows if term in (r['teacher'].full_name or '').lower() or term in (r['teacher'].username or '').lower()]
+    return render_template('admin/results_teachers.html', rows=rows, q=term)
 
 
 @admin_bp.route('/results/<int:sid>')
