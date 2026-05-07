@@ -21,9 +21,11 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
-    total_students = Student.query.count()
+    total_students = (db.session.query(db.func.count(db.distinct(TestSession.student_id)))
+                      .filter(TestSession.status == 'completed')
+                      .scalar() or 0)
     total_sessions = TestSession.query.filter_by(status='completed').count()
-    total_teachers = User.query.filter_by(role='teacher').count()
+    total_teachers = User.query.filter_by(role='teacher', is_active=True).count()
     total_questions = Question.query.count()
     recent_sessions = (TestSession.query.filter_by(status='completed')
                        .order_by(TestSession.completed_at.desc()).limit(10).all())
