@@ -29,16 +29,16 @@
 
       {% for q in subject.questions %}
       {% set curr_score = existing_answers.get(q.id, '') %}
-      <div class="question-item">
+      <div class="question-item{% if missing_question_ids and q.id in missing_question_ids %} missing{% endif %}" id="q{{ q.id }}">
         <div class="question-num">Вопрос {{ loop.index }}</div>
         <div class="question-text">{{ q.text }}</div>
         {% if q.description %}
         <div class="question-desc">💡 {{ q.description }}</div>
         {% endif %}
         <div class="score-input-wrap">
-          <input type="number" name="score_{{ q.id }}" class="score-field"
+          <input type="number" name="score_{{ q.id }}" class="score-field{% if missing_question_ids and q.id in missing_question_ids %} missing{% endif %}"
                  min="0" max="100" value="{{ curr_score }}" placeholder="0"
-                 id="score_{{ q.id }}">
+                 id="score_{{ q.id }}" required>
           <div class="score-bar">
             <div class="score-bar-fill" id="bar_{{ q.id }}"
                  style="width:{{ curr_score if curr_score != '' else 0 }}%"></div>
@@ -92,5 +92,12 @@ document.querySelectorAll('.score-field').forEach(function(input) {
     }
   });
 });
+const missingId = {{ missing_question_id if missing_question_id else 'null' }};
+if (missingId) {
+  const el = document.getElementById('q' + missingId);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const inp = document.getElementById('score_' + missingId);
+  if (inp) inp.focus();
+}
 </script>
 {% endblock %}

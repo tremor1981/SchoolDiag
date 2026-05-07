@@ -64,6 +64,31 @@ def test_form(session_id):
     subjects = Subject.query.order_by(Subject.order).all()
 
     if request.method == 'POST':
+        form_answers = {}
+        missing = []
+        for subject in subjects:
+            for question in subject.questions:
+                score_key = f'score_{question.id}'
+                raw = (request.form.get(score_key) or '').strip()
+                if raw == '':
+                    missing.append(question.id)
+                    form_answers[question.id] = ''
+                    continue
+                try:
+                    score = max(0, min(100, int(raw)))
+                except (ValueError, TypeError):
+                    score = 0
+                form_answers[question.id] = str(score)
+
+        if missing:
+            flash('Заполните баллы для всех вопросов', 'error')
+            return render_template('teacher/test_form.html',
+                                   session=session,
+                                   subjects=subjects,
+                                   existing_answers=form_answers,
+                                   missing_question_id=missing[0],
+                                   missing_question_ids=set(missing))
+
         for subject in subjects:
             for question in subject.questions:
                 score_key = f'score_{question.id}'
@@ -92,7 +117,9 @@ def test_form(session_id):
     return render_template('teacher/test_form.html',
                            session=session,
                            subjects=subjects,
-                           existing_answers=existing_answers)
+                           existing_answers=existing_answers,
+                           missing_question_id=None,
+                           missing_question_ids=set())
 
 
 @teacher_bp.route('/history')
