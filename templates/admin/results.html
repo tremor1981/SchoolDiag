@@ -7,6 +7,8 @@
     <p>Все завершённые тесты</p>
   </div>
   <div class="flex gap-2">
+    <a href="{{ url_for('admin.results_students') }}" class="btn btn-outline">По ученикам</a>
+    <a href="{{ url_for('admin.results_teachers') }}" class="btn btn-outline">По учителям</a>
     <a href="{{ url_for('admin.export_report') }}" class="btn btn-primary">🖨 Ведомость (Excel)</a>
   </div>
 </div>

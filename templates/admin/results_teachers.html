@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Результаты — по учителям{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>👩‍🏫 Результаты по учителям</h1>
+    <p>Сводка по завершённым тестам</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('admin.results') }}" class="btn btn-outline">По тестам</a>
+    <a href="{{ url_for('admin.results_students') }}" class="btn btn-outline">По ученикам</a>
+    <a href="{{ url_for('admin.export_teachers') }}" class="btn btn-primary">⬇ Экспорт CSV</a>
+  </div>
+</div>
+
+<div class="card">
+  {% if rows %}
+  <div class="mb-4">
+    <input type="text" id="tableSearch" class="form-control" placeholder="🔍 Поиск по учителю..." onkeyup="filterTable()">
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Учитель</th><th>Логин</th><th>Тестов</th><th>Ср. итог (%)</th><th>Последний тест</th><th></th></tr>
+      </thead>
+      <tbody id="resultsTableBody">
+        {% for r in rows %}
+        <tr>
+          <td class="text-muted">{{ loop.index }}</td>
+          <td class="fw-bold">{{ r.teacher.full_name }}</td>
+          <td class="text-muted">{{ r.teacher.username }}</td>
+          <td>{{ r.count }}</td>
+          <td>
+            <span class="badge {% if r.avg_pct >= 80 %}badge-green{% elif r.avg_pct >= 50 %}badge-purple{% else %}badge-red{% endif %}">
+              {{ r.avg_pct }}%
+            </span>
+          </td>
+          <td class="text-muted">{{ r.last_completed_at.strftime('%d.%m.%Y %H:%M') if r.last_completed_at else '—' }}</td>
+          <td><a href="{{ url_for('admin.results', teacher_id=r.teacher.id) }}" class="btn btn-sm btn-outline">Открыть</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+  function filterTable() {
+    const input = document.getElementById('tableSearch');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('#resultsTableBody tr');
+    
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(filter) ? '' : 'none';
+    });
+  }
+  </script>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📭</div>
+    <p>Результатов пока нет.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

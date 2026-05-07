@@ -44,8 +44,8 @@
   <div class="flex items-center justify-between mb-4">
     <h3 class="fw-bold">Последние тесты</h3>
     <div class="flex gap-2">
-      <a href="{{ url_for('admin.export_students') }}" class="btn btn-sm btn-success">⬇ По ученикам</a>
-      <a href="{{ url_for('admin.export_teachers') }}" class="btn btn-sm btn-outline">⬇ По учителям</a>
+      <a href="{{ url_for('admin.results_students') }}" class="btn btn-sm btn-success">По ученикам</a>
+      <a href="{{ url_for('admin.results_teachers') }}" class="btn btn-sm btn-outline">По учителям</a>
     </div>
   </div>
   {% if recent_sessions %}

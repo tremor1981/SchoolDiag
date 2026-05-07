@@ -135,9 +135,86 @@ def reset_password(tid):
 @login_required
 @admin_required
 def results():
+    q = TestSession.query.filter_by(status='completed')
+    student_id = request.args.get('student_id', type=int)
+    teacher_id = request.args.get('teacher_id', type=int)
+    if student_id:
+        q = q.filter_by(student_id=student_id)
+    if teacher_id:
+        q = q.filter_by(teacher_id=teacher_id)
+    sessions = q.order_by(TestSession.completed_at.desc()).all()
+    return render_template('admin/results.html',
+                           sessions=sessions,
+                           student_id=student_id,
+                           teacher_id=teacher_id)
+
+
+@admin_bp.route('/results/students')
+@login_required
+@admin_required
+def results_students():
     sessions = (TestSession.query.filter_by(status='completed')
                 .order_by(TestSession.completed_at.desc()).all())
-    return render_template('admin/results.html', sessions=sessions)
+    rows_map = {}
+    for s in sessions:
+        sid = s.student_id
+        if sid not in rows_map:
+            rows_map[sid] = {
+                'student': s.student,
+                'count': 0,
+                'pct_sum': 0.0,
+                'last_completed_at': None,
+            }
+        rows_map[sid]['count'] += 1
+        rows_map[sid]['pct_sum'] += s.percentage()
+        if not rows_map[sid]['last_completed_at'] or (s.completed_at and s.completed_at > rows_map[sid]['last_completed_at']):
+            rows_map[sid]['last_completed_at'] = s.completed_at
+
+    rows = []
+    for item in rows_map.values():
+        avg_pct = round(item['pct_sum'] / item['count'], 1) if item['count'] else 0
+        rows.append({
+            'student': item['student'],
+            'count': item['count'],
+            'avg_pct': avg_pct,
+            'last_completed_at': item['last_completed_at'],
+        })
+    rows.sort(key=lambda r: (r['last_completed_at'] is None, r['last_completed_at']), reverse=True)
+    return render_template('admin/results_students.html', rows=rows)
+
+
+@admin_bp.route('/results/teachers')
+@login_required
+@admin_required
+def results_teachers():
+    sessions = (TestSession.query.filter_by(status='completed')
+                .order_by(TestSession.completed_at.desc()).all())
+    rows_map = {}
+    for s in sessions:
+        tid = s.teacher_id
+        if tid not in rows_map:
+            rows_map[tid] = {
+                'teacher': s.teacher,
+                'count': 0,
+                'pct_sum': 0.0,
+                'last_completed_at': None,
+            }
+        rows_map[tid]['count'] += 1
+        rows_map[tid]['pct_sum'] += s.percentage()
+        if not rows_map[tid]['last_completed_at'] or (s.completed_at and s.completed_at > rows_map[tid]['last_completed_at']):
+            rows_map[tid]['last_completed_at'] = s.completed_at
+
+    rows = []
+    for item in rows_map.values():
+        avg_pct = round(item['pct_sum'] / item['count'], 1) if item['count'] else 0
+        rows.append({
+            'teacher': item['teacher'],
+            'count': item['count'],
+            'avg_pct': avg_pct,
+            'last_completed_at': item['last_completed_at'],
+        })
+    rows.sort(key=lambda r: (r['last_completed_at'] is None, r['last_completed_at']), reverse=True)
+    return render_template('admin/results_teachers.html', rows=rows)
 
 
 @admin_bp.route('/results/<int:sid>')
