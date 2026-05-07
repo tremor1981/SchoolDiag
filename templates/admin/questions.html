@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Вопросы{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>❓ Управление вопросами</h1>
+    <p>Добавляйте вопросы по каждому предмету</p>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addModal')">+ Добавить вопрос</button>
+</div>
+
+{% for subject in subjects %}
+<div class="card mb-4">
+  <div class="subject-header">
+    <span class="subj-icon">{{ subject.icon }}</span>
+    <h3>{{ subject.name_ru }}</h3>
+    <span class="badge badge-purple">{{ subject.questions|length }} вопросов</span>
+  </div>
+  {% if subject.questions %}
+    {% for q in subject.questions %}
+    <div class="question-item">
+      <div class="flex items-center justify-between">
+        <div style="flex:1">
+          <div class="question-num">Вопрос {{ loop.index }}</div>
+          <div class="question-text">{{ q.text }}</div>
+          {% if q.description %}
+          <div class="question-desc">💡 {{ q.description }}</div>
+          {% endif %}
+        </div>
+        <form method="POST" action="{{ url_for('admin.delete_question', q_id=q.id) }}">
+          <button type="submit" class="btn btn-sm btn-danger">🗑</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding:24px">
+      <p>Нет вопросов. Добавьте первый вопрос.</p>
+    </div>
+  {% endif %}
+</div>
+{% endfor %}
+
+<!-- Add Question Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title">➕ Новый вопрос</div>
+    <form method="POST" action="{{ url_for('admin.add_question') }}">
+      <div class="form-group">
+        <label class="form-label">Предмет</label>
+        <select name="subject_id" class="form-control" required>
+          {% for s in subjects %}
+          <option value="{{ s.id }}">{{ s.icon }} {{ s.name_ru }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Текст вопроса *</label>
+        <textarea name="text" class="form-control" rows="3" placeholder="Введите вопрос или задание..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Подсказка для учителя (необязательно)</label>
+        <input type="text" name="description" class="form-control" placeholder="Инструкция или уточнение...">
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('addModal')">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Кабинет учителя{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>Кабинет учителя 👩‍🏫</h1>
+    <p>{{ current_user.full_name }}</p>
+  </div>
+  <a href="{{ url_for('teacher.new_test') }}" class="btn btn-primary">+ Новая диагностика</a>
+</div>
+
+<div class="stats-grid" style="grid-template-columns:repeat(2,1fr);max-width:500px;margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-icon cyan">✅</div>
+    <div class="stat-info">
+      <p>{{ completed_count }}</p><span>Завершено тестов</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange">⏳</div>
+    <div class="stat-info">
+      <p>{{ '1' if in_progress else '0' }}</p><span>В процессе</span>
+    </div>
+  </div>
+</div>
+
+{% if in_progress %}
+<div class="card mb-4" style="border-color:var(--warn)">
+  <div class="flex items-center justify-between">
+    <div>
+      <div class="badge badge-orange mb-4">⏳ Незавершённый тест</div>
+      <p class="fw-bold">{{ in_progress.student.full_name }}</p>
+      <p class="text-muted text-sm">Начат: {{ in_progress.started_at.strftime('%d.%m.%Y %H:%M') }}</p>
+    </div>
+    <a href="{{ url_for('teacher.test_form', session_id=in_progress.id) }}" class="btn btn-primary">Продолжить →</a>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3 class="fw-bold mb-4">Последние тесты</h3>
+  {% if my_sessions %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Ученик</th><th>Дата рождения</th><th>Итог</th><th>Статус</th><th>Дата</th></tr>
+      </thead>
+      <tbody>
+        {% for s in my_sessions %}
+        <tr>
+          <td class="fw-bold">{{ s.student.full_name }}</td>
+          <td>{{ s.student.birth_date.strftime('%d.%m.%Y') }}</td>
+          <td>
+            {% if s.status == 'completed' %}
+              {% set pct = s.percentage() %}
+              <span class="badge {% if pct >= 80 %}badge-green{% elif pct >= 50 %}badge-purple{% else %}badge-red{% endif %}">{{ pct }}%</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if s.status == 'completed' %}
+              <span class="badge badge-green">✅ Завершён</span>
+            {% else %}
+              <span class="badge badge-orange">⏳ В процессе</span>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ s.started_at.strftime('%d.%m.%Y') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📋</div>
+    <p>Тестов ещё нет. Начните новую диагностику!</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="flex gap-2 mt-4">
+  <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm">🚪 Выйти</a>
+</div>
+{% endblock %}

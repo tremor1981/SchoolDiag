@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Результат — {{ session.student.full_name }}{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>📄 {{ session.student.full_name }}</h1>
+    <p>Дата рождения: {{ session.student.birth_date.strftime('%d.%m.%Y') }} · Учитель: {{ session.teacher.full_name }}</p>
+  </div>
+  <div class="flex gap-2">
+    <button onclick="window.print()" class="btn btn-primary">🖨 Скачать PDF</button>
+    <a href="{{ url_for('admin.results') }}" class="btn btn-outline">← Назад</a>
+  </div>
+</div>
+
+<!-- Summary -->
+{% set pct = session.percentage() %}
+<div class="card mb-4">
+  <div class="flex items-center gap-3 mb-4">
+    <div style="font-size:48px">
+      {% if pct >= 80 %}🏆{% elif pct >= 50 %}👍{% else %}📚{% endif %}
+    </div>
+    <div>
+      <div style="font-size:32px;font-weight:800;color:{% if pct >= 80 %}#00d4aa{% elif pct >= 50 %}#6c63ff{% else %}#ff4f70{% endif %}">
+        {{ pct }}%
+      </div>
+      <div class="text-muted">{{ session.total_score() }} из {{ session.max_score() }} баллов</div>
+    </div>
+    <div style="flex:1; margin-left:20px">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width:{{ pct }}%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+  {% set scores = session.score_by_subject() %}
+  {% for subj_id, data in scores.items() %}
+  {% set s_max = data.count * 100 %}
+  {% set s_pct = (data.total / s_max * 100) | round(1) if s_max > 0 else 0 %}
+  <div class="card card-sm" style="text-align:center">
+    <div style="font-size:24px;margin-bottom:6px">{{ data.icon }}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">{{ data.name }}</div>
+    <div style="font-size:20px;font-weight:700;color:{% if s_pct >= 80 %}#00d4aa{% elif s_pct >= 50 %}#6c63ff{% else %}#ff4f70{% endif %}">
+      {{ data.total }}<span style="font-size:12px;color:var(--muted)">/{{ s_max }}</span>
+    </div>
+    <div class="progress-bar-wrap" style="margin-top:8px">
+      <div class="progress-bar-fill" style="width:{{ s_pct }}%"></div>
+    </div>
+  </div>
+  {% endfor %}
+  </div>
+</div>
+
+<!-- Detailed answers by subject -->
+{% set answers_map = {} %}
+{% for a in session.answers %}{% set _ = answers_map.update({a.question_id: a.score}) %}{% endfor %}
+
+{% for subject in subjects %}
+{% if subject.questions %}
+<div class="card mb-4">
+  <div class="subject-header">
+    <span class="subj-icon">{{ subject.icon }}</span>
+    <h3>{{ subject.name_ru }}</h3>
+  </div>
+  {% for q in subject.questions %}
+  {% set sc = answers_map.get(q.id, 0) %}
+  <div class="question-item">
+    <div class="question-num">Вопрос {{ loop.index }}</div>
+    <div class="question-text">{{ q.text }}</div>
+    <div class="score-input-wrap" style="pointer-events:none;opacity:0.85">
+      <div class="score-field" style="background:var(--card)">{{ sc }}</div>
+      <div class="score-bar">
+        <div class="score-bar-fill" style="width:{{ sc }}%;{% if sc >= 80 %}background:linear-gradient(90deg,#00d4aa,#00ff88){% elif sc >= 50 %}background:linear-gradient(90deg,#6c63ff,#00d4aa){% else %}background:linear-gradient(90deg,#ff4f70,#ffb547){% endif %}"></div>
+      </div>
+      <span class="text-muted text-sm">{{ sc }}/100</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endfor %}
+
+{% if session.notes %}
+<div class="card">
+  <h3 class="fw-bold mb-4">📝 Заметки учителя</h3>
+  <p>{{ session.notes }}</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Дашборд{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>Добро пожаловать, {{ current_user.full_name.split()[0] }}! 👋</h1>
+    <p>Обзор системы диагностики</p>
+  </div>
+  <a href="{{ url_for('admin.results') }}" class="btn btn-outline">Все результаты →</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon purple">👶</div>
+    <div class="stat-info">
+      <p>{{ total_students }}</p>
+      <span>Учеников</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon cyan">✅</div>
+    <div class="stat-info">
+      <p>{{ total_sessions }}</p>
+      <span>Завершённых тестов</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange">👩‍🏫</div>
+    <div class="stat-info">
+      <p>{{ total_teachers }}</p>
+      <span>Учителей</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red">❓</div>
+    <div class="stat-info">
+      <p>{{ total_questions }}</p>
+      <span>Вопросов</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="fw-bold">Последние тесты</h3>
+    <div class="flex gap-2">
+      <a href="{{ url_for('admin.export_students') }}" class="btn btn-sm btn-success">⬇ По ученикам</a>
+      <a href="{{ url_for('admin.export_teachers') }}" class="btn btn-sm btn-outline">⬇ По учителям</a>
+    </div>
+  </div>
+  {% if recent_sessions %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Ученик</th><th>Дата рождения</th><th>Учитель</th>
+          <th>Итог (%)</th><th>Дата</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in recent_sessions %}
+        <tr>
+          <td class="fw-bold">{{ s.student.full_name }}</td>
+          <td>{{ s.student.birth_date.strftime('%d.%m.%Y') }}</td>
+          <td>{{ s.teacher.full_name }}</td>
+          <td>
+            {% set pct = s.percentage() %}
+            <span class="badge {% if pct >= 80 %}badge-green{% elif pct >= 50 %}badge-purple{% else %}badge-red{% endif %}">
+              {{ pct }}%
+            </span>
+          </td>
+          <td class="text-muted">{{ s.completed_at.strftime('%d.%m.%Y %H:%M') if s.completed_at else '—' }}</td>
+          <td><a href="{{ url_for('admin.result_detail', sid=s.id) }}" class="btn btn-sm btn-outline">Детали</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📭</div>
+    <p>Тестов ещё нет. Учителя ещё не провели диагностику.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

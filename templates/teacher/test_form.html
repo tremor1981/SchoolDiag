@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Диагностика — {{ session.student.full_name }}{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>📝 {{ session.student.full_name }}</h1>
+    <p>Дата рождения: {{ session.student.birth_date.strftime('%d.%m.%Y') }}</p>
+  </div>
+  <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-outline">← Сохранить и выйти</a>
+</div>
+
+{% if not subjects or subjects | sum(attribute='questions', start=[]) | list | length == 0 %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">⚠️</div>
+    <p>Администратор ещё не добавил вопросы. Обратитесь к администратору.</p>
+  </div>
+</div>
+{% else %}
+<form method="POST" action="{{ url_for('teacher.test_form', session_id=session.id) }}">
+  {% for subject in subjects %}
+    {% if subject.questions %}
+    <div class="card mb-4">
+      <div class="subject-header">
+        <span class="subj-icon">{{ subject.icon }}</span>
+        <h3>{{ subject.name_ru }}</h3>
+        <span class="badge badge-purple">{{ subject.questions|length }} вопросов</span>
+      </div>
+
+      {% for q in subject.questions %}
+      {% set curr_score = existing_answers.get(q.id, '') %}
+      <div class="question-item">
+        <div class="question-num">Вопрос {{ loop.index }}</div>
+        <div class="question-text">{{ q.text }}</div>
+        {% if q.description %}
+        <div class="question-desc">💡 {{ q.description }}</div>
+        {% endif %}
+        <div class="score-input-wrap">
+          <input type="number" name="score_{{ q.id }}" class="score-field"
+                 min="0" max="100" value="{{ curr_score }}" placeholder="0"
+                 id="score_{{ q.id }}">
+          <div class="score-bar">
+            <div class="score-bar-fill" id="bar_{{ q.id }}"
+                 style="width:{{ curr_score if curr_score != '' else 0 }}%"></div>
+          </div>
+          <span class="text-muted text-sm">из 100</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+
+  <div class="card" style="position:sticky;bottom:16px;border-color:var(--primary)">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="fw-bold">Готово? Завершите тест.</p>
+        <p class="text-muted text-sm">Данные сохранятся в базе и учитель больше не сможет их изменить.</p>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" name="save" class="btn btn-outline">💾 Сохранить</button>
+        <button type="submit" name="complete" value="1" class="btn btn-primary">
+          ✅ Завершить тест
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize score bars on load
+document.querySelectorAll('.score-field').forEach(function(input) {
+  const id = input.id.replace('score_', '');
+  const bar = document.getElementById('bar_' + id);
+  if (bar && input.value) {
+    const v = parseInt(input.value) || 0;
+    bar.style.width = v + '%';
+    if (v >= 80) bar.style.background = 'linear-gradient(90deg,#00d4aa,#00ff88)';
+    else if (v >= 50) bar.style.background = 'linear-gradient(90deg,#6c63ff,#00d4aa)';
+    else if (v > 0) bar.style.background = 'linear-gradient(90deg,#ff4f70,#ffb547)';
+  }
+  input.addEventListener('input', function() {
+    const v = Math.max(0, Math.min(100, parseInt(this.value) || 0));
+    if (bar) {
+      bar.style.width = v + '%';
+      if (v >= 80) bar.style.background = 'linear-gradient(90deg,#00d4aa,#00ff88)';
+      else if (v >= 50) bar.style.background = 'linear-gradient(90deg,#6c63ff,#00d4aa)';
+      else bar.style.background = 'linear-gradient(90deg,#ff4f70,#ffb547)';
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}История тестов{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>📁 История тестов</h1>
+    <p>Все завершённые вами диагностики</p>
+  </div>
+  <a href="{{ url_for('teacher.new_test') }}" class="btn btn-primary">+ Новая</a>
+</div>
+
+<div class="card">
+  {% if sessions %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Ученик</th><th>Дата рождения</th><th>Итог (%)</th><th>Балл</th><th>Дата теста</th></tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        <tr>
+          <td class="text-muted">{{ loop.index }}</td>
+          <td class="fw-bold">{{ s.student.full_name }}</td>
+          <td>{{ s.student.birth_date.strftime('%d.%m.%Y') }}</td>
+          <td>
+            {% set pct = s.percentage() %}
+            <span class="badge {% if pct >= 80 %}badge-green{% elif pct >= 50 %}badge-purple{% else %}badge-red{% endif %}">
+              {{ pct }}%
+            </span>
+          </td>
+          <td>{{ s.total_score() }} / {{ s.max_score() }}</td>
+          <td class="text-muted">{{ s.completed_at.strftime('%d.%m.%Y %H:%M') if s.completed_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📭</div>
+    <p>Завершённых тестов нет.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
