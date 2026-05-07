@@ -9,7 +9,7 @@
   <div class="flex gap-2">
     <button onclick="window.print()" class="btn btn-primary">🖨 Скачать PDF</button>
     <form method="POST" action="{{ url_for('admin.delete_session', sid=session.id) }}" onsubmit="return confirm('Удалить этот завершённый тест?');">
-      <button type="submit" class="btn btn-danger">🗑 Удалить</button>
+      <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить этот завершённый тест?');">🗑 Удалить</button>
     </form>
     <a href="{{ url_for('admin.results') }}" class="btn btn-outline">← Назад</a>
   </div>

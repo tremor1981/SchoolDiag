@@ -47,7 +47,7 @@
             <div class="flex gap-2">
               <a href="{{ url_for('admin.result_detail', sid=s.id) }}" class="btn btn-sm btn-outline">Детали →</a>
               <form method="POST" action="{{ url_for('admin.delete_session', sid=s.id) }}" onsubmit="return confirm('Удалить этот завершённый тест?');">
-                <button type="submit" class="btn btn-sm btn-danger">🗑 Удалить</button>
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить этот завершённый тест?');">🗑 Удалить</button>
               </form>
             </div>
           </td>
