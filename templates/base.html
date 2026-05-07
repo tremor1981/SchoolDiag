@@ -30,6 +30,9 @@
       <a href="{{ url_for('admin.results') }}" class="nav-link {% if 'result' in request.endpoint %}active{% endif %}">
         <span class="icon">📋</span> Результаты
       </a>
+      <a href="{{ url_for('admin.change_password') }}" class="nav-link {% if request.endpoint == 'admin.change_password' %}active{% endif %}">
+        <span class="icon">🔑</span> Сменить пароль
+      </a>
       {% else %}
       <div class="nav-section">Учитель</div>
       <a href="{{ url_for('teacher.dashboard') }}" class="nav-link {% if request.endpoint == 'teacher.dashboard' %}active{% endif %}">

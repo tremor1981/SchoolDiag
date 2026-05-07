@@ -19,7 +19,7 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>#</th><th>Ученик</th><th>Дата рождения</th><th>Учитель</th><th>Итог (%)</th><th>Итог (балл)</th><th>Дата теста</th><th></th></tr>
+        <tr><th>#</th><th>Ученик</th><th>Дата рождения</th><th>Учитель</th><th>Итог (%)</th><th>Итог (балл)</th><th>Дата теста</th><th>Действия</th></tr>
       </thead>
       <tbody id="resultsTableBody">
         {% for s in sessions %}
@@ -36,7 +36,14 @@
           </td>
           <td>{{ s.total_score() }} / {{ s.max_score() }}</td>
           <td class="text-muted">{{ s.completed_at.strftime('%d.%m.%Y %H:%M') if s.completed_at else '—' }}</td>
-          <td><a href="{{ url_for('admin.result_detail', sid=s.id) }}" class="btn btn-sm btn-outline">Детали →</a></td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('admin.result_detail', sid=s.id) }}" class="btn btn-sm btn-outline">Детали →</a>
+              <form method="POST" action="{{ url_for('admin.delete_session', sid=s.id) }}" onsubmit="return confirm('Удалить этот завершённый тест?');">
+                <button type="submit" class="btn btn-sm btn-danger">🗑 Удалить</button>
+              </form>
+            </div>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

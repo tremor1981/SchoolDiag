@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from functools import wraps
 from models import db, User, Subject, Question, Student, TestSession, Answer
 
@@ -147,6 +147,55 @@ def result_detail(sid):
     session = TestSession.query.get_or_404(sid)
     subjects = Subject.query.order_by(Subject.order).all()
     return render_template('admin/result_detail.html', session=session, subjects=subjects)
+
+
+@admin_bp.route('/results/<int:sid>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_session(sid):
+    session = TestSession.query.get_or_404(sid)
+    if session.status != 'completed':
+        flash('Можно удалять только завершённые тесты', 'error')
+        return redirect(url_for('admin.results'))
+    Answer.query.filter_by(session_id=sid).delete()
+    db.session.delete(session)
+    db.session.commit()
+    flash('Тест удалён', 'success')
+    return redirect(url_for('admin.results'))
+
+
+@admin_bp.route('/change-password', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def change_password():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password', '')
+        new_password = request.form.get('new_password', '')
+        new_password2 = request.form.get('new_password2', '')
+
+        if not current_password or not new_password or not new_password2:
+            flash('Заполните все поля', 'error')
+            return redirect(url_for('admin.change_password'))
+
+        if not current_user.check_password(current_password):
+            flash('Текущий пароль неверный', 'error')
+            return redirect(url_for('admin.change_password'))
+
+        if new_password != new_password2:
+            flash('Пароли не совпадают', 'error')
+            return redirect(url_for('admin.change_password'))
+
+        if len(new_password) < 6:
+            flash('Пароль должен быть минимум 6 символов', 'error')
+            return redirect(url_for('admin.change_password'))
+
+        current_user.set_password(new_password)
+        db.session.commit()
+        logout_user()
+        flash('Пароль обновлён. Войдите снова', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('admin/change_password.html')
 
 
 @admin_bp.route('/export/students')
