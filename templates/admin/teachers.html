@@ -75,6 +75,13 @@
         <button type="button" class="btn btn-outline" onclick="closeModal('editTeacher{{ t.id }}')">Отмена</button>
       </div>
     </form>
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border);">
+    <div class="modal-title" style="font-size: 14px;">🛡 Права администратора</div>
+    <form method="POST" action="{{ url_for('admin.change_role', uid=t.id) }}">
+      <input type="hidden" name="role" value="admin">
+      <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">Сделать этого учителя администратором? Он получит доступ ко всем настройкам системы.</p>
+      <button type="submit" class="btn btn-sm btn-success w-full">Сделать администратором</button>
+    </form>
   </div>
 </div>
 

@@ -176,6 +176,38 @@ def delete_teacher(tid):
     return redirect(url_for('admin.teachers'))
 
 
+@admin_bp.route('/users/<int:uid>/change-role', methods=['POST'])
+@login_required
+@admin_required
+def change_role(uid):
+    user = User.query.get_or_404(uid)
+    new_role = request.form.get('role')
+    
+    if user.id == current_user.id:
+        flash('Вы не можете изменить свою собственную роль', 'error')
+        return redirect(request.referrer or url_for('admin.dashboard'))
+        
+    if new_role not in ['admin', 'teacher']:
+        flash('Неверная роль', 'error')
+        return redirect(request.referrer or url_for('admin.dashboard'))
+        
+    # If demoting the last active admin
+    if user.role == 'admin' and new_role == 'teacher':
+        active_admins_count = User.query.filter_by(role='admin', is_active=True).count()
+        if active_admins_count <= 1:
+            flash('Нельзя лишить прав последнего активного администратора', 'error')
+            return redirect(url_for('admin.admins'))
+
+    user.role = new_role
+    db.session.commit()
+    flash(f'Роль пользователя {user.full_name} изменена на {"Администратор" if new_role == "admin" else "Учитель"}', 'success')
+    
+    if new_role == 'admin':
+        return redirect(url_for('admin.admins'))
+    else:
+        return redirect(url_for('admin.teachers'))
+
+
 @admin_bp.route('/admins')
 @login_required
 @admin_required
