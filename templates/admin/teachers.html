@@ -35,7 +35,11 @@
                   {{ '🚫 Блок' if t.is_active else '✅ Акт' }}
                 </button>
               </form>
+              <button class="btn btn-sm btn-outline" onclick="openModal('editTeacher{{ t.id }}')">✏️ Ред.</button>
               <button class="btn btn-sm btn-outline" onclick="openModal('resetPwd{{ t.id }}')">🔑 Пароль</button>
+              <form method="POST" action="{{ url_for('admin.delete_teacher', tid=t.id) }}" onsubmit="return confirm('Удалить учителя «{{ t.full_name }}» и ВСЕ его тесты? Это действие необратимо!');">
+                <button type="submit" class="btn btn-sm btn-danger">🗑</button>
+              </form>
             </div>
           </td>
         </tr>
@@ -51,8 +55,30 @@
   {% endif %}
 </div>
 
-<!-- Reset Password Modals -->
+<!-- Modals for each teacher -->
 {% for t in teachers %}
+<!-- Edit Teacher Modal -->
+<div class="modal-overlay" id="editTeacher{{ t.id }}">
+  <div class="modal">
+    <div class="modal-title">✏️ Редактирование — {{ t.full_name }}</div>
+    <form method="POST" action="{{ url_for('admin.edit_teacher', tid=t.id) }}">
+      <div class="form-group">
+        <label class="form-label">ФИО учителя</label>
+        <input type="text" name="full_name" class="form-control" value="{{ t.full_name }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Логин</label>
+        <input type="text" name="username" class="form-control" value="{{ t.username }}" required>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('editTeacher{{ t.id }}')">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
 <div class="modal-overlay" id="resetPwd{{ t.id }}">
   <div class="modal">
     <div class="modal-title">🔑 Сброс пароля — {{ t.full_name }}</div>

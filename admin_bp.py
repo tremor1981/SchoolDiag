@@ -136,6 +136,46 @@ def reset_password(tid):
     return redirect(url_for('admin.teachers'))
 
 
+@admin_bp.route('/teachers/<int:tid>/edit', methods=['POST'])
+@login_required
+@admin_required
+def edit_teacher(tid):
+    t = User.query.get_or_404(tid)
+    username = request.form.get('username', '').strip()
+    full_name = request.form.get('full_name', '').strip()
+    if not username or not full_name:
+        flash('Заполните все поля', 'error')
+        return redirect(url_for('admin.teachers'))
+    existing = User.query.filter_by(username=username).first()
+    if existing and existing.id != tid:
+        flash('Этот логин уже используется другим пользователем', 'error')
+        return redirect(url_for('admin.teachers'))
+    t.username = username
+    t.full_name = full_name
+    db.session.commit()
+    flash(f'Данные учителя «{full_name}» обновлены', 'success')
+    return redirect(url_for('admin.teachers'))
+
+
+@admin_bp.route('/teachers/<int:tid>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_teacher(tid):
+    t = User.query.get_or_404(tid)
+    if t.id == current_user.id:
+        flash('Нельзя удалить самого себя', 'error')
+        return redirect(url_for('admin.teachers'))
+    # Delete all associated data
+    sessions = TestSession.query.filter_by(teacher_id=tid).all()
+    for s in sessions:
+        Answer.query.filter_by(session_id=s.id).delete()
+        db.session.delete(s)
+    db.session.delete(t)
+    db.session.commit()
+    flash(f'Учитель «{t.full_name}» и все связанные данные удалены', 'success')
+    return redirect(url_for('admin.teachers'))
+
+
 @admin_bp.route('/admins')
 @login_required
 @admin_required
