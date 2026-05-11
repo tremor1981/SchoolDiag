@@ -25,6 +25,7 @@ def dashboard():
                       .filter(TestSession.status == 'completed')
                       .scalar() or 0)
     total_sessions = TestSession.query.filter_by(status='completed').count()
+    total_active_sessions = TestSession.query.filter_by(status='in_progress').count()
     total_teachers = User.query.filter_by(role='teacher', is_active=True).count()
     total_questions = Question.query.count()
     recent_sessions = (TestSession.query.filter_by(status='completed')
@@ -32,6 +33,7 @@ def dashboard():
     return render_template('admin/dashboard.html',
                            total_students=total_students,
                            total_sessions=total_sessions,
+                           total_active_sessions=total_active_sessions,
                            total_teachers=total_teachers,
                            total_questions=total_questions,
                            recent_sessions=recent_sessions)
@@ -134,6 +136,72 @@ def reset_password(tid):
     return redirect(url_for('admin.teachers'))
 
 
+@admin_bp.route('/admins')
+@login_required
+@admin_required
+def admins():
+    admins_list = User.query.filter_by(role='admin').order_by(User.created_at.desc()).all()
+    active_admins_count = User.query.filter_by(role='admin', is_active=True).count()
+    return render_template('admin/admins.html',
+                           admins=admins_list,
+                           active_admins_count=active_admins_count)
+
+
+@admin_bp.route('/admins/add', methods=['POST'])
+@login_required
+@admin_required
+def add_admin():
+    username = request.form.get('username', '').strip()
+    full_name = request.form.get('full_name', '').strip()
+    password = request.form.get('password', '')
+    if not username or not full_name or not password:
+        flash('Заполните все поля', 'error')
+        return redirect(url_for('admin.admins'))
+    if User.query.filter_by(username=username).first():
+        flash('Логин уже занят', 'error')
+        return redirect(url_for('admin.admins'))
+    a = User(username=username, full_name=full_name, role='admin', is_active=True)
+    a.set_password(password)
+    db.session.add(a)
+    db.session.commit()
+    flash(f'Администратор «{full_name}» добавлен', 'success')
+    return redirect(url_for('admin.admins'))
+
+
+@admin_bp.route('/admins/<int:aid>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def toggle_admin(aid):
+    a = User.query.get_or_404(aid)
+    if a.id == current_user.id:
+        flash('Нельзя изменить статус текущего администратора', 'error')
+        return redirect(url_for('admin.admins'))
+    if a.is_active:
+        active_admins_count = User.query.filter_by(role='admin', is_active=True).count()
+        if active_admins_count <= 1:
+            flash('Нельзя отключить последнего активного администратора', 'error')
+            return redirect(url_for('admin.admins'))
+    a.is_active = not a.is_active
+    db.session.commit()
+    flash(f'Администратор {a.full_name} {"активирован" if a.is_active else "деактивирован"}', 'success')
+    return redirect(url_for('admin.admins'))
+
+
+@admin_bp.route('/admins/<int:aid>/reset-password', methods=['POST'])
+@login_required
+@admin_required
+def reset_admin_password(aid):
+    a = User.query.get_or_404(aid)
+    pwd = request.form.get('new_password', '')
+    if not pwd:
+        flash('Введите новый пароль', 'error')
+        return redirect(url_for('admin.admins'))
+    a.set_password(pwd)
+    db.session.commit()
+    flash(f'Пароль для {a.full_name} обновлён', 'success')
+    return redirect(url_for('admin.admins'))
+
+
 @admin_bp.route('/results')
 @login_required
 @admin_required
@@ -159,6 +227,15 @@ def results():
                            student_id=student_id,
                            teacher_id=teacher_id,
                            q=term)
+
+
+@admin_bp.route('/active-sessions')
+@login_required
+@admin_required
+def active_sessions():
+    sessions = (TestSession.query.filter_by(status='in_progress')
+                .order_by(TestSession.started_at.desc()).all())
+    return render_template('admin/active_sessions.html', sessions=sessions)
 
 
 @admin_bp.route('/results/students')
@@ -249,13 +326,15 @@ def result_detail(sid):
 @admin_required
 def delete_session(sid):
     session = TestSession.query.get_or_404(sid)
-    if session.status != 'completed':
-        flash('Можно удалять только завершённые тесты', 'error')
-        return redirect(url_for('admin.results'))
+    # Allow deleting both completed and in_progress sessions
     Answer.query.filter_by(session_id=sid).delete()
     db.session.delete(session)
     db.session.commit()
     flash('Тест удалён', 'success')
+    # Redirect back to where we came from if possible
+    ref = request.referrer
+    if ref and 'active-sessions' in ref:
+        return redirect(url_for('admin.active_sessions'))
     return redirect(url_for('admin.results'))
 
 

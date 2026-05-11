@@ -38,6 +38,13 @@
       <span>Вопросов</span>
     </div>
   </div>
+  <a href="{{ url_for('admin.active_sessions') }}" class="stat-card" style="text-decoration: none; color: inherit;">
+    <div class="stat-icon yellow">⏳</div>
+    <div class="stat-info">
+      <p>{{ total_active_sessions }}</p>
+      <span>Незавершённых</span>
+    </div>
+  </a>
 </div>
 
 <div class="card">

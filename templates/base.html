@@ -27,8 +27,14 @@
       <a href="{{ url_for('admin.teachers') }}" class="nav-link {% if request.endpoint == 'admin.teachers' %}active{% endif %}">
         <span class="icon">👩‍🏫</span> Учителя
       </a>
-      <a href="{{ url_for('admin.results') }}" class="nav-link {% if 'result' in request.endpoint %}active{% endif %}">
+      <a href="{{ url_for('admin.admins') }}" class="nav-link {% if request.endpoint == 'admin.admins' %}active{% endif %}">
+        <span class="icon">🛡</span> Админы
+      </a>
+      <a href="{{ url_for('admin.results') }}" class="nav-link {% if 'results' in request.endpoint %}active{% endif %}">
         <span class="icon">📋</span> Результаты
+      </a>
+      <a href="{{ url_for('admin.active_sessions') }}" class="nav-link {% if request.endpoint == 'admin.active_sessions' %}active{% endif %}">
+        <span class="icon">⏳</span> Незавершенные
       </a>
       <a href="{{ url_for('admin.change_password') }}" class="nav-link {% if request.endpoint == 'admin.change_password' %}active{% endif %}">
         <span class="icon">🔑</span> Сменить пароль

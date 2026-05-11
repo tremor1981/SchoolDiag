@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Незавершенные тесты{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>⏳ Незавершенные тесты</h1>
+    <p>Тесты, которые еще проводятся учителями</p>
+  </div>
+  <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline">← На дашборд</a>
+</div>
+
+<div class="card">
+  {% if sessions %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Ученик</th>
+          <th>Дата рождения</th>
+          <th>Учитель</th>
+          <th>Начало</th>
+          <th>Прогресс</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        <tr>
+          <td class="text-muted">{{ loop.index }}</td>
+          <td class="fw-bold">{{ s.student.full_name }}</td>
+          <td>{{ s.student.birth_date.strftime('%d.%m.%Y') }}</td>
+          <td>{{ s.teacher.full_name }}</td>
+          <td class="text-muted">{{ s.started_at.strftime('%d.%m.%Y %H:%M') }}</td>
+          <td>
+            {% set total_ans = s.answers|length %}
+            <span class="badge badge-purple">Ответов: {{ total_ans }}</span>
+          </td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('teacher.test_form', session_id=s.id) }}" class="btn btn-sm btn-primary">Продолжить/Завершить</a>
+              <form method="POST" action="{{ url_for('admin.delete_session', sid=s.id) }}" onsubmit="return confirm('Удалить этот незавершенный тест?');">
+                <button type="submit" class="btn btn-sm btn-danger">🗑 Удалить</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">✅</div>
+    <p>Все тесты завершены или еще не начаты.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
